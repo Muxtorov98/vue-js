@@ -1,0 +1,35 @@
+stages:
+  - deploy
+
+pages:
+  stage: deploy
+  script:
+    - mkdir .public
+    - cp -r * .public
+    - mv .public public
+    - rm -rf public/.codio
+    - rm -rf public/.git
+    - rm -rf public/.gitlab-ci.yml
+    - rm -rf public/.studio
+  artifacts:
+    paths:
+      - public
+
+before_script:
+  - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+  - eval $(ssh-agent -s)
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+
+deploy-prod-job:
+  stage: deploy
+  only:
+    - master
+  script:
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r | ssh-add -
+    - echo "Deploying the PROD project..."
+    - ssh -tt -o StrictHostKeyChecking=no $SSH_HOST \
+      "cd /root/sites/static/uzcodes-front/ && 
+      git reset --hard &&
+      git pull &&
+      docker compose up"
